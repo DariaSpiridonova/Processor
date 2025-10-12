@@ -247,7 +247,7 @@ ProcessorErrors do_out(struct processor *spu, ssize_t num_of_parameters)
         return ERROR_IN_STACK;
     }
 
-    printf("The value obtained from the stack: %d\n", deliver_value/MULTY);
+    printf("The value obtained from the stack: %f\n", (double)deliver_value/MULTY);
 
     return NO_SPU_ERROR;
 }
