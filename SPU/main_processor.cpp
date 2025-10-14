@@ -5,7 +5,7 @@
 
 int main()
 {
-    FILE *byte_code = fopen("byte_code.txt", "r");
+    FILE *byte_code = fopen("../Assembler/byte_code.txt", "r");
 
     if (!open_files_success(byte_code))
         return -1;

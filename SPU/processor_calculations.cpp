@@ -84,12 +84,14 @@ ProcessorErrors read_and_do_the_command(struct processor *spu, ssize_t num_of_pa
         case IN:
             err = do_in(spu, num_of_parameters);
             break;
+
         case JB:
         case JA:
         case JBE:
         case JAE:
         case JE:
         case JNE:
+            printf("CALL J\n");
             err = do_j(spu, num_of_parameters, command);
             if (err) break;
             goto transition; 
@@ -378,7 +380,9 @@ ProcessorErrors do_j(struct processor *spu, ssize_t num_of_parameters, CommandsN
             break;
 
         case JE:
+            printf("CALL J\n");
             res_of_compare = (values[0] == values[1]);
+            printf("res_of_compare = %zu***\n", res_of_compare);
             break;
 
         case JNE:
@@ -404,10 +408,19 @@ ProcessorErrors do_j(struct processor *spu, ssize_t num_of_parameters, CommandsN
 
     if (res_of_compare)
     {
+        printf("CALL J\n");
         int adress = spu->buffer_with_commands[++spu->instruct_counter];
         spu->instruct_counter = (ssize_t)adress;
     }
-    else spu->instruct_counter += 2;
+    else 
+    {
+        for (ssize_t i = 1; i >= 0; i--)
+        {
+            if (StackPush(spu->stk, values[i])) return ERROR_IN_STACK;
+        }
+        
+        spu->instruct_counter += 2;
+    }
     
     return err;
 }

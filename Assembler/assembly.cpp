@@ -18,6 +18,11 @@ bool identify_the_command(struct commands_for_change *data_buffer)
     else if (is_command(data_buffer->command, "PUSHR", &command_exist)) data_buffer->num_of_command = PUSHR; 
     else if (is_command(data_buffer->command, "POPR",  &command_exist)) data_buffer->num_of_command = POPR; 
     else if (is_command(data_buffer->command, "JB",    &command_exist)) data_buffer->num_of_command = JB; 
+    else if (is_command(data_buffer->command, "JA",    &command_exist)) data_buffer->num_of_command = JA; 
+    else if (is_command(data_buffer->command, "JBE",    &command_exist)) data_buffer->num_of_command = JBE; 
+    else if (is_command(data_buffer->command, "JAE",    &command_exist)) data_buffer->num_of_command = JAE; 
+    else if (is_command(data_buffer->command, "JE",    &command_exist)) data_buffer->num_of_command = JE; 
+    else if (is_command(data_buffer->command, "JNE",    &command_exist)) data_buffer->num_of_command = JNE; 
     else if (is_command(data_buffer->command, "JMP",   &command_exist)) data_buffer->num_of_command = JMP; 
     else if (is_command(data_buffer->command, "IN",    &command_exist)) data_buffer->num_of_command = IN; 
     
