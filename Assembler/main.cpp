@@ -5,44 +5,41 @@
 
 int main()
 {
-    FILE *commands_for_reading = fopen("original_commands.asm", "r");
-    FILE *commands_for_record = fopen("byte_code.txt", "w");
+    struct commands_for_change data_buffer;
 
-    struct commands_for_change data_buffer = 
-    {
-        .command = {0},
-        .num_of_command = NON_EXISTING_COMMAND,
-        .reg_command = NON_EXISTING_ARGUMENT,
-        .reg_argument = {0},
-        .argument = 0,
-        .num_of_parameters = 0,
-        .num_of_strings = 1
-    };
+    labels_init(&data_buffer);
 
-    fprintf(commands_for_record, "                                    \n");
-    int res = 0;
-    while (!feof(commands_for_reading))
+    for (size_t j = 1; j <= NUM_OF_COMPILATIONS; j++)
     {
-        if (fscanf(commands_for_reading, "%9s", data_buffer.command) != 1)
+        int res = 0;
+        FILE *commands_for_reading = NULL;
+        FILE *commands_for_record = NULL;
+
+        if ((res = opening_files_and_initializing_data(&commands_for_reading, &commands_for_record, &data_buffer, j)))
         {
-            printf("\033[31min commands.asm: line %zu: The command is not set.\033[0m\n", data_buffer.num_of_strings);
-            return 1;
+            return res;
+        }
+        if (commands_for_record == NULL) 
+        {
+            printf("hf");
+            return 9;
+        }
+        fprintf(commands_for_record, "                                    \n");
+        
+        if ((res = compile_file_content(commands_for_reading, commands_for_record, &data_buffer)))
+        {
+            printf(RED_COLOR_BEGIN "in commands.asm: line %zu: An error occurred during compilation №%zu" RED_COLOR_END, data_buffer.num_of_strings, j);
+            return res;
         }
 
-        if (!identify_the_command(&data_buffer))
+        printf("STOP\n");
+        fseek(commands_for_record, 0, SEEK_SET);
+        fprintf(commands_for_record, "%zd", data_buffer.num_of_parameters++);
+        data_buffer.number_of_compilation++;
+        if (!close_files_success(commands_for_reading, commands_for_record))
         {
-            printf("\033[31min commands.asm: line %zu: The command %s does not exist.\033[0m\n", data_buffer.num_of_strings, data_buffer.command);
-            return 2;
+            return -2;
         }
-
-        fprintf(commands_for_record, "%d ", data_buffer.num_of_command);
-        data_buffer.num_of_parameters++;
-
-        if ((res = get_argument(commands_for_reading, commands_for_record, &data_buffer)))
-            return res;   
     }
-
-    fseek(commands_for_record, 0, SEEK_SET);
-    fprintf(commands_for_record, "%zu", data_buffer.num_of_parameters++);
     return 0;
 }

@@ -15,6 +15,7 @@
         ProcessorDump(stk, num_of_parameters, __FILE__, __LINE__)
 
 const size_t SIZE = 16;
+const size_t SIZE1 = 64;
 const used_type MULTY = 1000;
 
 enum CommandsNums
@@ -36,7 +37,11 @@ enum CommandsNums
     JAE,
     JE,
     JNE,
-    JMP
+    JMP,
+    CALL,
+    RET,
+    PUSHM = 80,
+    POPM
 };
 
 enum ProcessorErrors
@@ -44,8 +49,10 @@ enum ProcessorErrors
     NO_SPU_ERROR,
     READING_BYTE_CODE_ERROR, 
     ERROR_IN_STACK,
+    ERROR_IN_RAM,
     EMPTY_POINTER_ON_STACK,
     EMPTY_POINTER_ON_COMMANDS_BUFFER,
+    EMPTY_POINTER_ON_RAM,
     EMPTY_REGISTERS_BUFFER,
     ERROR_IN_COUNTER,
     INCORRECT_NUMBER_OF_PARAMETERS,
@@ -59,9 +66,11 @@ enum ProcessorErrors
 struct processor
 {
     struct stack_t *stk;
+    struct stack_t *refund_stk;
     int *buffer_with_commands;
     ssize_t instruct_counter;
     used_type buffer_of_registers[SIZE];
+    used_type *RAM;
 };
 
 bool open_files_success(FILE *byte_code);
@@ -83,6 +92,9 @@ ProcessorErrors do_popr(struct processor *spu, ssize_t num_of_parameters);
 ProcessorErrors do_j(struct processor *spu, ssize_t num_of_parameters, CommandsNums command);
 ProcessorErrors do_jmp(struct processor *spu, ssize_t num_of_parameters);
 ProcessorErrors do_in(struct processor *spu, ssize_t num_of_parameters);
+ProcessorErrors do_ret(struct processor *spu, ssize_t num_of_parameters);
+ProcessorErrors do_pushm(struct processor *spu, ssize_t num_of_parameters);
+ProcessorErrors do_popm(struct processor *spu, ssize_t num_of_parameters);
 
 bool print_error(ProcessorErrors err);
 

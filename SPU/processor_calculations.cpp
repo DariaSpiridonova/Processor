@@ -93,23 +93,34 @@ ProcessorErrors read_and_do_the_command(struct processor *spu, ssize_t num_of_pa
         case JNE:
             printf("CALL J\n");
             err = do_j(spu, num_of_parameters, command);
-            if (err) break;
-            goto transition; 
-        
+            break; 
+         
+        case CALL:
+            if (StackPush(spu->refund_stk, (used_type)spu->instruct_counter + 2))
+                return ERROR_IN_STACK;
+            [[fallthrough]];
         case JMP:
             err = do_jmp(spu, num_of_parameters);
-            if (err) break;
-            goto transition; 
+            break;  
+
+        case RET:
+            err = do_ret(spu, num_of_parameters);
+            break;
+
+        case PUSHM:
+            err = do_pushm(spu, num_of_parameters);
+            break;
+
+        case POPM:
+            err = do_popm(spu, num_of_parameters);
+            break;
 
         default:
             return NON_EXISTENT_COMMAND;
     }
     
     if (err) return err;
-
-    spu->instruct_counter++;
-
-    transition:
+    if (command < JB) spu->instruct_counter++;
     if ((err = ProcessorVerify(spu, num_of_parameters)))
     {
         PROCESSOR_DUMP(spu, num_of_parameters);
@@ -299,7 +310,6 @@ ProcessorErrors do_pushr(struct processor *spu, ssize_t num_of_parameters)
     }
 
     return NO_SPU_ERROR;
-
 }
 
 ProcessorErrors do_popr(struct processor *spu, ssize_t num_of_parameters)
@@ -382,7 +392,7 @@ ProcessorErrors do_j(struct processor *spu, ssize_t num_of_parameters, CommandsN
         case JE:
             printf("CALL J\n");
             res_of_compare = (values[0] == values[1]);
-            printf("res_of_compare = %zu***\n", res_of_compare);
+            printf("res_of_compare = %d***\n", res_of_compare);
             break;
 
         case JNE:
@@ -401,6 +411,10 @@ ProcessorErrors do_j(struct processor *spu, ssize_t num_of_parameters, CommandsN
         case POPR:
         case JMP:
         case IN:
+        case CALL:
+        case RET:
+        case PUSHM:
+        case POPM:
             return NON_EXISTENT_COMMAND;
         default:
             return NON_EXISTENT_COMMAND;
@@ -464,6 +478,94 @@ ProcessorErrors do_in(struct processor *spu, ssize_t num_of_parameters)
     }
 
     if (StackPush(spu->stk, console_value*MULTY)) return ERROR_IN_STACK;
+
+    if ((err = ProcessorVerify(spu, num_of_parameters)))
+    {
+        PROCESSOR_DUMP(spu, num_of_parameters);
+        return err;
+    }
+
+    return err;
+}
+
+ProcessorErrors do_ret(struct processor *spu, ssize_t num_of_parameters)
+{ 
+    ASSERT(spu, num_of_parameters);
+
+    ProcessorErrors err = NO_SPU_ERROR;
+
+    if ((err = ProcessorVerify(spu, num_of_parameters)))
+    {
+        PROCESSOR_DUMP(spu, num_of_parameters);
+        return err;
+    }
+
+    StackErr_t err1 = NO_ERROR;
+    used_type adress = StackPop(spu->refund_stk, &err1);
+    if (err1)
+    {
+        STACK_DUMP(spu->refund_stk); 
+        return ERROR_IN_STACK;
+    }
+
+    spu->instruct_counter = (ssize_t)adress;
+
+    if ((err = ProcessorVerify(spu, num_of_parameters)))
+    {
+        PROCESSOR_DUMP(spu, num_of_parameters);
+        return err;
+    }
+
+    return err;
+}
+
+ProcessorErrors do_pushm(struct processor *spu, ssize_t num_of_parameters)
+{
+    ASSERT(spu, num_of_parameters);
+
+    ProcessorErrors err = NO_SPU_ERROR;
+
+    if ((err = ProcessorVerify(spu, num_of_parameters)))
+    {
+        PROCESSOR_DUMP(spu, num_of_parameters);
+        return err;
+    }
+
+    int index = spu->buffer_with_commands[++spu->instruct_counter];
+
+    if (StackPush(spu->stk, spu->RAM[spu->buffer_of_registers[index]])) return ERROR_IN_STACK;
+
+    if ((err = ProcessorVerify(spu, num_of_parameters)))
+    {
+        PROCESSOR_DUMP(spu, num_of_parameters);
+        return err;
+    }
+
+    return NO_SPU_ERROR;
+}
+
+ProcessorErrors do_popm(struct processor *spu, ssize_t num_of_parameters)
+{
+    ASSERT(spu, num_of_parameters);
+
+    ProcessorErrors err = NO_SPU_ERROR;
+
+    if ((err = ProcessorVerify(spu, num_of_parameters)))
+    {
+        PROCESSOR_DUMP(spu, num_of_parameters);
+        return err;
+    }
+
+    StackErr_t err1 = NO_ERROR;
+    used_type deliver_value = StackPop(spu->stk, &err1);
+    if ((err1 = StackVerify(spu->stk))) 
+    {
+        StackDump(spu->stk,__FILE__, __LINE__); 
+        return ERROR_IN_STACK;
+    }
+
+    int index = spu->buffer_with_commands[++spu->instruct_counter];
+    spu->RAM[spu->buffer_of_registers[index]] = deliver_value;
 
     if ((err = ProcessorVerify(spu, num_of_parameters)))
     {

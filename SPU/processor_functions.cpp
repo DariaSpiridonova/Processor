@@ -11,7 +11,13 @@ ProcessorErrors ProcessorInit(struct processor *spu, ssize_t num_of_parameters, 
     assert(num_of_parameters > 0);
 
     spu->buffer_with_commands = (int *)calloc((size_t)num_of_parameters + 1, sizeof(int));
-    StackInit(spu->stk, num_of_parameters);
+    if (spu->buffer_with_commands == NULL) return ERROR_IN_STACK;
+    spu->RAM = (used_type *)calloc((size_t)SIZE1 + 1, sizeof(int));
+    if (spu->RAM == NULL) return ERROR_IN_RAM;
+
+    if (StackInit(spu->stk, num_of_parameters) || StackInit(spu->refund_stk, SIZE1))
+        return ERROR_IN_STACK;
+
     spu->instruct_counter = 0;
     
     if (spu->buffer_with_commands == NULL)
@@ -67,6 +73,7 @@ ProcessorErrors ProcessorVerify(struct processor *spu, ssize_t num_of_parameters
 
     if (spu->stk == NULL) return EMPTY_POINTER_ON_STACK;
     else if (spu->buffer_with_commands == NULL) return EMPTY_POINTER_ON_COMMANDS_BUFFER;
+    else if (spu->RAM == NULL) return EMPTY_POINTER_ON_RAM;
     else if (sizeof(spu->buffer_of_registers) == 0) return EMPTY_REGISTERS_BUFFER;
     else if (spu->instruct_counter < 0) return ERROR_IN_COUNTER;
     else if (num_of_parameters <= 0) return INCORRECT_NUMBER_OF_PARAMETERS;
@@ -88,7 +95,9 @@ ProcessorErrors ProcessorDestroy(struct processor *spu, ssize_t num_of_parameter
     }
     printf("FREE\n");
     StackDestroy(spu->stk);
+    StackDestroy(spu->refund_stk);
     free(spu->buffer_with_commands);
+    free(spu->RAM);
     spu->buffer_with_commands = NULL;
     spu = NULL;
 
@@ -103,10 +112,17 @@ void ProcessorDump(const struct processor *spu, ssize_t num_of_parameters, const
     printf("SPU[%p]\n", spu);
     printf("BUFFER_WITH_COMMANDS[%p]\n", spu->buffer_with_commands);
     printf("BUFFER_OF_REGISTERS[%p]\n", spu->buffer_of_registers);
+    printf("REFUND_STACK[%p]\n", spu->refund_stk);
+    printf("RAM[%p]\n", spu->RAM);
     printf("{\n");
     printf("    instruct_counter = %ld", spu->instruct_counter);
     printf("    num_of_parameters = %ld", num_of_parameters);
     printf("Size of buffer with registers = %zu", sizeof(spu->buffer_of_registers));
+    printf("    Stack contents:\n");
+    for (size_t i = 0; i < SIZE1; i++)
+    {
+        printf("        [%zu] = %d\n", i, spu->refund_stk->data[i]);
+    }
     printf("    Commands written to the buffer:\n");
     for (ssize_t i = 0; i < num_of_parameters; i++)
     {
@@ -116,6 +132,11 @@ void ProcessorDump(const struct processor *spu, ssize_t num_of_parameters, const
     for (size_t i = 0; i < SIZE; i++)
     {
         printf("        [%zu] = %d\n", i, spu->buffer_of_registers[i]);
+    }
+    printf("    RAM:\n");
+    for (size_t i = 0; i < SIZE1; i++)
+    {
+        printf("        [%zu] = %d\n", i, spu->RAM[i]);
     }
     printf("    }\n");
     printf("}\n");
@@ -135,6 +156,10 @@ bool print_error(ProcessorErrors err)
         case ERROR_IN_STACK:
             printf("An error occurred while working with the stack");
             return true;
+        
+        case ERROR_IN_RAM:
+            printf("An error occurred while working with the RAM");
+            return true;
 
         case EMPTY_POINTER_ON_STACK:
             printf("The pointer to the stack is empty");
@@ -146,6 +171,10 @@ bool print_error(ProcessorErrors err)
 
         case EMPTY_REGISTERS_BUFFER:
             printf("The pointer to the buffer with registers is empty");
+            return true;
+
+        case EMPTY_POINTER_ON_RAM:
+            printf("The pointer to the RAM is empty");
             return true;
 
         case ERROR_IN_COUNTER:
