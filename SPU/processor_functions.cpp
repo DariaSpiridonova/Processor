@@ -12,7 +12,7 @@ ProcessorErrors ProcessorInit(struct processor *spu, ssize_t num_of_parameters, 
 
     spu->buffer_with_commands = (int *)calloc((size_t)num_of_parameters + 1, sizeof(int));
     if (spu->buffer_with_commands == NULL) return ERROR_IN_STACK;
-    spu->RAM = (used_type *)calloc((size_t)SIZE1 + 1, sizeof(int));
+    spu->RAM = (used_type *)calloc((size_t)SIZE_RAM + 1, sizeof(int));
     if (spu->RAM == NULL) return ERROR_IN_RAM;
 
     if (StackInit(spu->stk, num_of_parameters) || StackInit(spu->refund_stk, SIZE1))
@@ -134,7 +134,7 @@ void ProcessorDump(const struct processor *spu, ssize_t num_of_parameters, const
         printf("        [%zu] = %d\n", i, spu->buffer_of_registers[i]);
     }
     printf("    RAM:\n");
-    for (size_t i = 0; i < SIZE1; i++)
+    for (size_t i = 0; i < SIZE_RAM; i++)
     {
         printf("        [%zu] = %d\n", i, spu->RAM[i]);
     }

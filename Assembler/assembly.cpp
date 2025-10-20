@@ -31,6 +31,7 @@ bool identify_the_command(struct commands_for_change *data_buffer)
     else if (is_command(data_buffer->command, "RET",   &command_exist)) data_buffer->num_of_command = RET; 
     else if (is_command(data_buffer->command, "PUSHM", &command_exist)) data_buffer->num_of_command = PUSHM; 
     else if (is_command(data_buffer->command, "POPM",  &command_exist)) data_buffer->num_of_command = POPM; 
+    else if (is_command(data_buffer->command, "PRINT_RAM",  &command_exist)) data_buffer->num_of_command = PRINT_RAM; 
     else if (data_buffer->command[0] == ':') 
     {
         data_buffer->num_of_command = COLON; 
@@ -85,6 +86,7 @@ int get_argument(FILE *commands_for_reading, FILE *commands_for_record, struct c
         case NON_EXISTING_COMMAND:
         case IN:
         case RET:
+        case PRINT_RAM:
             fprintf(commands_for_record, "\n");
             break;
 
@@ -288,8 +290,9 @@ int check_and_get_index(FILE *commands_for_reading, FILE *commands_for_record, s
 {
     ASSERTS();
 
-    if (fscanf(commands_for_reading, "[%2s]", data_buffer->reg_argument) != 1)
+    if (fscanf(commands_for_reading, " [%2s]", data_buffer->reg_argument) != 1)
     {
+        printf("%c", fgetc(commands_for_reading));
         printf(RED_COLOR_BEGIN "in commands.asm: line %zu: It is not possible to add an item from RAM to the stack at an incorrectly set index." RED_COLOR_END, data_buffer->num_of_strings);
         return 12;
     }

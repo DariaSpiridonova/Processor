@@ -16,6 +16,7 @@
 
 const size_t SIZE = 16;
 const size_t SIZE1 = 64;
+const size_t SIZE_RAM = 200;
 const used_type MULTY = 1000;
 
 enum CommandsNums
@@ -41,7 +42,8 @@ enum CommandsNums
     CALL,
     RET,
     PUSHM = 80,
-    POPM
+    POPM,
+    PRINT_RAM = 100
 };
 
 enum ProcessorErrors
@@ -95,6 +97,7 @@ ProcessorErrors do_in(struct processor *spu, ssize_t num_of_parameters);
 ProcessorErrors do_ret(struct processor *spu, ssize_t num_of_parameters);
 ProcessorErrors do_pushm(struct processor *spu, ssize_t num_of_parameters);
 ProcessorErrors do_popm(struct processor *spu, ssize_t num_of_parameters);
+ProcessorErrors print_ram(struct processor *spu, ssize_t num_of_parameters);
 
 bool print_error(ProcessorErrors err);
 

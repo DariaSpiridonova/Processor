@@ -18,10 +18,12 @@ int main()
     }
 
     struct stack_t stk;
+    struct stack_t refund_stk;
 
     struct processor spu = 
     {
-        .stk = &stk
+        .stk = &stk,
+        .refund_stk = &refund_stk
     };
 
     ProcessorErrors err = ProcessorInit(&spu, num_of_parameters, byte_code);

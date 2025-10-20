@@ -19,11 +19,7 @@ int main()
         {
             return res;
         }
-        if (commands_for_record == NULL) 
-        {
-            printf("hf");
-            return 9;
-        }
+        
         fprintf(commands_for_record, "                                    \n");
         
         if ((res = compile_file_content(commands_for_reading, commands_for_record, &data_buffer)))

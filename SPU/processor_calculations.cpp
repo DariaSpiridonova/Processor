@@ -115,12 +115,16 @@ ProcessorErrors read_and_do_the_command(struct processor *spu, ssize_t num_of_pa
             err = do_popm(spu, num_of_parameters);
             break;
 
+        case PRINT_RAM:
+            err = print_ram(spu, num_of_parameters);
+            break;
+
         default:
             return NON_EXISTENT_COMMAND;
     }
     
     if (err) return err;
-    if (command < JB) spu->instruct_counter++;
+    if (command < JB || command > RET) spu->instruct_counter++;
     if ((err = ProcessorVerify(spu, num_of_parameters)))
     {
         PROCESSOR_DUMP(spu, num_of_parameters);
@@ -415,6 +419,7 @@ ProcessorErrors do_j(struct processor *spu, ssize_t num_of_parameters, CommandsN
         case RET:
         case PUSHM:
         case POPM:
+        case PRINT_RAM:
             return NON_EXISTENT_COMMAND;
         default:
             return NON_EXISTENT_COMMAND;
@@ -566,6 +571,33 @@ ProcessorErrors do_popm(struct processor *spu, ssize_t num_of_parameters)
 
     int index = spu->buffer_with_commands[++spu->instruct_counter];
     spu->RAM[spu->buffer_of_registers[index]] = deliver_value;
+
+    if ((err = ProcessorVerify(spu, num_of_parameters)))
+    {
+        PROCESSOR_DUMP(spu, num_of_parameters);
+        return err;
+    }
+
+    return err;
+}
+
+ProcessorErrors print_ram(struct processor *spu, ssize_t num_of_parameters)
+{
+    ASSERT(spu, num_of_parameters);
+
+    ProcessorErrors err = NO_SPU_ERROR;
+
+    if ((err = ProcessorVerify(spu, num_of_parameters)))
+    {
+        PROCESSOR_DUMP(spu, num_of_parameters);
+        return err;
+    }
+
+    for (size_t i = 100; i < SIZE_RAM; i++)
+    {
+        printf("%d ", spu->RAM[i]);
+        if ((i + 1) % 10 == 0) printf("\n");
+    }
 
     if ((err = ProcessorVerify(spu, num_of_parameters)))
     {
