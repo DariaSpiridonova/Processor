@@ -48,6 +48,7 @@ ProcessorErrors read_and_do_the_command(struct processor *spu, ssize_t num_of_pa
     }
 
     CommandsNums command = (CommandsNums)spu->buffer_with_commands[spu->instruct_counter];
+    printf("command = %d\n", command);
     switch(command)
     {
         case PUSH:
@@ -96,6 +97,7 @@ ProcessorErrors read_and_do_the_command(struct processor *spu, ssize_t num_of_pa
             break; 
          
         case CALL:
+            printf("instruct_counter = %zd\n", spu->instruct_counter);
             if (StackPush(spu->refund_stk, (used_type)spu->instruct_counter + 2))
                 return ERROR_IN_STACK;
             [[fallthrough]];
@@ -149,6 +151,7 @@ ProcessorErrors do_push(struct processor *spu, ssize_t num_of_parameters)
     used_type deliver_value = spu->buffer_with_commands[++spu->instruct_counter];
 
     if (StackPush(spu->stk, deliver_value*MULTY)) return ERROR_IN_STACK;
+    printf("instruct_counter = %zd\n", spu->instruct_counter);
 
     if ((err = ProcessorVerify(spu, num_of_parameters)))
     {
@@ -199,6 +202,7 @@ ProcessorErrors arithmetic_operations(struct processor *spu, int command, ssize_
     }
 
     if (StackPush(spu->stk, result)) return ERROR_IN_STACK;
+    printf("instruct_counter = %zd\n", spu->instruct_counter);
     if ((err = ProcessorVerify(spu, num_of_parameters)))
     {
         PROCESSOR_DUMP(spu, num_of_parameters);
@@ -235,6 +239,7 @@ ProcessorErrors do_sqrt(struct processor *spu, ssize_t num_of_parameters)
     }
     
     if (StackPush(spu->stk, (used_type)pow(deliver_value*MULTY, 0.5))) return ERROR_IN_STACK;
+    printf("instruct_counter = %zd\n", spu->instruct_counter);
     if ((err = ProcessorVerify(spu, num_of_parameters)))
     {
         PROCESSOR_DUMP(spu, num_of_parameters);
@@ -306,6 +311,7 @@ ProcessorErrors do_pushr(struct processor *spu, ssize_t num_of_parameters)
     int index = spu->buffer_with_commands[++spu->instruct_counter];
 
     if (StackPush(spu->stk, spu->buffer_of_registers[index])) return ERROR_IN_STACK;
+    printf("instruct_counter = %zd\n", spu->instruct_counter);
 
     if ((err = ProcessorVerify(spu, num_of_parameters)))
     {
@@ -436,6 +442,7 @@ ProcessorErrors do_j(struct processor *spu, ssize_t num_of_parameters, CommandsN
         for (ssize_t i = 1; i >= 0; i--)
         {
             if (StackPush(spu->stk, values[i])) return ERROR_IN_STACK;
+            printf("instruct_counter = %zd\n", spu->instruct_counter);
         }
         
         spu->instruct_counter += 2;
@@ -483,6 +490,7 @@ ProcessorErrors do_in(struct processor *spu, ssize_t num_of_parameters)
     }
 
     if (StackPush(spu->stk, console_value*MULTY)) return ERROR_IN_STACK;
+    printf("instruct_counter = %zd\n", spu->instruct_counter);
 
     if ((err = ProcessorVerify(spu, num_of_parameters)))
     {
@@ -526,6 +534,12 @@ ProcessorErrors do_ret(struct processor *spu, ssize_t num_of_parameters)
 
 ProcessorErrors do_pushm(struct processor *spu, ssize_t num_of_parameters)
 {
+    printf("    Buffer with registers:\n");
+    for (size_t i = 0; i < SIZE; i++)
+    {
+        printf("        [%zu] = %d\n", i, spu->buffer_of_registers[i]);
+    }
+
     ASSERT(spu, num_of_parameters);
 
     ProcessorErrors err = NO_SPU_ERROR;
@@ -537,8 +551,10 @@ ProcessorErrors do_pushm(struct processor *spu, ssize_t num_of_parameters)
     }
 
     int index = spu->buffer_with_commands[++spu->instruct_counter];
+    printf("%d \n", index);
 
-    if (StackPush(spu->stk, spu->RAM[spu->buffer_of_registers[index]])) return ERROR_IN_STACK;
+    if (StackPush(spu->stk, spu->RAM[spu->buffer_of_registers[index]/MULTY])) return ERROR_IN_STACK;
+    printf("instruct_counter = %zd\n", spu->instruct_counter);
 
     if ((err = ProcessorVerify(spu, num_of_parameters)))
     {
@@ -551,6 +567,11 @@ ProcessorErrors do_pushm(struct processor *spu, ssize_t num_of_parameters)
 
 ProcessorErrors do_popm(struct processor *spu, ssize_t num_of_parameters)
 {
+    printf("    Buffer with registers:\n");
+    for (size_t i = 0; i < SIZE; i++)
+    {
+        printf("        [%zu] = %d\n", i, spu->buffer_of_registers[i]);
+    }
     ASSERT(spu, num_of_parameters);
 
     ProcessorErrors err = NO_SPU_ERROR;
@@ -570,7 +591,7 @@ ProcessorErrors do_popm(struct processor *spu, ssize_t num_of_parameters)
     }
 
     int index = spu->buffer_with_commands[++spu->instruct_counter];
-    spu->RAM[spu->buffer_of_registers[index]] = deliver_value;
+    spu->RAM[spu->buffer_of_registers[index]/MULTY] = deliver_value;
 
     if ((err = ProcessorVerify(spu, num_of_parameters)))
     {
@@ -595,7 +616,8 @@ ProcessorErrors print_ram(struct processor *spu, ssize_t num_of_parameters)
 
     for (size_t i = 100; i < SIZE_RAM; i++)
     {
-        printf("%d ", spu->RAM[i]);
+        if (spu->RAM[i]) printf(BLUE_COLOR_BEGIN "#" BLUE_COLOR_END);
+        else printf("0 ");
         if ((i + 1) % 10 == 0) printf("\n");
     }
 
